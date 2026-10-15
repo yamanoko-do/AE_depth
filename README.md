@@ -60,15 +60,28 @@ KITTI 的 GT 较稀疏。送入 codec 前使用最近有效像素填充空洞，
 
 ## 环境与模型
 
-默认使用已有环境和 checkpoint：
+默认使用已有环境、Cosmos Tokenizer 源码和已经转换的原生 PyTorch 权重：
 
 ```text
 Python: /root/host_share/miniconda3/envs/sam3d-objects/bin/python
-Checkpoint: /root/host_share/AE_coder/checkpoints/Cosmos-CI16x16
+Cosmos源码: /root/host_share/AE_coder/Cosmos-Tokenizer
+PyTorch权重: /root/host_share/AE_depth/weight/cosmos_ci16x16.pth
 ```
 
-checkpoint 目录应包含 `encoder.jit` 和 `decoder.jit`。运行需要 CUDA，当前模型按
-BF16 推理。
+运行时实例化开源的 `ContinuousImageTokenizer`，再加载上述 `state_dict`，不会读取
+JIT 文件。权重由 Git LFS 跟踪。运行需要 CUDA，当前模型按 BF16 推理。
+
+如需从 NVIDIA 原始 `encoder.jit` 和 `decoder.jit` 重新转换：
+
+```bash
+cd /root/host_share/AE_depth
+/root/host_share/miniconda3/envs/sam3d-objects/bin/python \
+  tools/convert_ci16x16_weights.py
+```
+
+转换器会检查两份 JIT 是否完整覆盖原生模型的全部参数，并在 CUDA 上比较转换前后的
+latent 和重建输出。当前权重包含 `81,509,088` 个参数，保存格式为 BF16
+PyTorch `state_dict`。
 
 ## 运行
 
@@ -91,7 +104,7 @@ cd /root/host_share
   --cfg_file AE_depth/cfgs/cosmos_ci16x16.yaml
 ```
 
-默认 `BENCHMARK.BATCH_SIZE: 4`。相同分辨率的样本会组成 batch，分辨率不同的样本
+batch size 由 `BENCHMARK.BATCH_SIZE` 控制。相同分辨率的样本会组成 batch，分辨率不同的样本
 分别处理；如果发生 CUDA OOM，程序自动将当前 batch 二分重试。命令行可以覆盖：
 
 ```bash
@@ -136,7 +149,10 @@ AE_depth/
 │   └── metrics.py         逐图与全局指标
 ├── cfgs/
 │   └── cosmos_ci16x16.yaml
+├── weight/
+│   └── cosmos_ci16x16.pth  Git LFS 跟踪的原生 PyTorch state_dict
 └── tools/
+    ├── convert_ci16x16_weights.py
     └── eval.py            OpenStereo 风格的评估入口与日志
 ```
 

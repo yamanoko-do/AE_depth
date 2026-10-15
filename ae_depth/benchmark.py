@@ -227,7 +227,9 @@ def run_benchmark(
     depth_bins = [tuple(map(float, values)) for values in benchmark_cfg["DEPTH_BINS_M"]]
     encodings = build_encodings(benchmark_cfg["METHODS"])
     codec = CosmosCI16x16Codec(
-        Path(config["MODEL"]["CHECKPOINT"]), config["MODEL"].get("DTYPE", "bfloat16")
+        Path(config["MODEL"]["WEIGHTS"]),
+        Path(config["MODEL"]["COSMOS_TOKENIZER_ROOT"]),
+        config["MODEL"].get("DTYPE", "bfloat16"),
     )
     adapters = build_adapters(config, max_depth_m)
     aggregates = AggregateMetrics()
@@ -242,7 +244,7 @@ def run_benchmark(
         else:
             logger.info(message)
 
-    log(f"Model checkpoint: {config['MODEL']['CHECKPOINT']}")
+    log(f"Model weights: {config['MODEL']['WEIGHTS']}")
     log(f"Output directory: {output_dir}")
     log(f"Batch size: {batch_size}")
     log(f"Depth encodings: {', '.join(benchmark_cfg['METHODS'])}")

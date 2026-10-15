@@ -1,6 +1,7 @@
 MODEL:
   NAME: Cosmos-CI16x16
-  CHECKPOINT: /root/host_share/AE_coder/checkpoints/Cosmos-CI16x16
+  WEIGHTS: /root/host_share/AE_depth/weight/cosmos_ci16x16.pth
+  COSMOS_TOKENIZER_ROOT: /root/host_share/AE_coder/Cosmos-Tokenizer
   DTYPE: bfloat16
 
 BENCHMARK:

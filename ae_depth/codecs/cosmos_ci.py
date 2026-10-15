@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import statistics
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -53,16 +54,33 @@ def _pad_rgb(image: np.ndarray, multiple: int = 16):
 
 
 class CosmosCI16x16Codec:
-    def __init__(self, checkpoint: Path, dtype: str = "bfloat16") -> None:
+    def __init__(
+        self,
+        weights: Path,
+        cosmos_tokenizer_root: Path,
+        dtype: str = "bfloat16",
+    ) -> None:
         if not torch.cuda.is_available():
             raise RuntimeError("Cosmos CI16x16 benchmark requires CUDA")
+        if not weights.is_file():
+            raise FileNotFoundError(f"PyTorch weights not found: {weights}")
+        package_root = str(cosmos_tokenizer_root.resolve())
+        if package_root not in sys.path:
+            sys.path.insert(0, package_root)
+        from cosmos_tokenizer.networks.continuous_image import (
+            ContinuousImageTokenizer,
+        )
+
         self.dtype = getattr(torch, dtype)
-        self.encoder = torch.jit.load(
-            str(checkpoint / "encoder.jit"), map_location="cuda"
-        ).eval().to(self.dtype)
-        self.decoder = torch.jit.load(
-            str(checkpoint / "decoder.jit"), map_location="cuda"
-        ).eval().to(self.dtype)
+        payload = torch.load(weights, map_location="cpu", weights_only=False)
+        if payload.get("format") != "cosmos_ci16x16_state_dict":
+            raise ValueError(f"Unsupported Cosmos weight format: {weights}")
+        model = ContinuousImageTokenizer(**payload["model_config"])
+        model.load_state_dict(payload["state_dict"], strict=True)
+        model = model.eval().to(device="cuda", dtype=self.dtype)
+        self.model = model
+        self.encoder = model.encoder_jit().eval()
+        self.decoder = model.decoder_jit().eval()
 
     @staticmethod
     def _time(fn, repeats: int):
