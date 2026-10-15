@@ -1,0 +1,60 @@
+MODEL:
+  NAME: Cosmos-CI16x16
+  CHECKPOINT: /root/host_share/AE_coder/checkpoints/Cosmos-CI16x16
+  DTYPE: bfloat16
+
+BENCHMARK:
+  OUTPUT_DIR: /root/host_share/outputs/cosmos_depth_datasets
+  MAX_DEPTH_M: 100.0
+  WARMUP: 3
+  REPEATS: 1
+  BATCH_SIZE: 40
+  LOG_INTERVAL: 10
+  SAVE_EXAMPLES_PER_DATASET: 1
+  METHODS:
+    - linear_minmax_rgb
+    - log_minmax_rgb
+    - defm_three_channel
+  DEPTH_BINS_M:
+    - [0.0, 5.0]
+    - [5.0, 20.0]
+    - [20.0, 50.0]
+    - [50.0, 100.0]
+
+# 配置结构及评估列表与 OpenStereo/cfgs/mixdataset_cfg_stage2.yaml 对齐。
+DATA_CONFIG:
+  DATA_INFOS:
+    - DATASET: Middlebury
+      DATA_PATH: /root/host_share/dataset/Middlebury
+      DATA_SPLIT:
+        EVALUATING: /root/host_share/OpenStereo/data/Middlebury/MiddEval3_train_h.txt
+      MIDDLEBURY_RESO: H
+
+    - DATASET: ETH3D
+      DATA_PATH: /root/host_share/dataset/ETH3D
+      DATA_SPLIT:
+        EVALUATING: /root/host_share/OpenStereo/data/ETH3D/ETH3D_train.txt
+
+    - DATASET: KITTI12
+      DATA_PATH: /root/host_share/dataset/KITTI12
+      DATA_SPLIT:
+        EVALUATING: /root/host_share/OpenStereo/data/KITTI12/kitti12_train194.txt
+      USE_NOC: true
+
+    - DATASET: KITTI15
+      DATA_PATH: /root/host_share/dataset/KITTI15
+      DATA_SPLIT:
+        EVALUATING: /root/host_share/OpenStereo/data/KITTI15/kitti15_train200.txt
+      USE_NOC: true
+
+    - DATASET: Booster
+      DATA_PATH: /root/host_share/dataset/BoosterDataset
+      DATA_SPLIT:
+        EVALUATING: /root/host_share/OpenStereo/data/Booster/booster_balanced_train.txt
+      BOOSTER_RESO: Q
+
+    - DATASET: FallingThings
+      DATA_PATH: /root/host_share/dataset/FallingThings
+      DATA_SPLIT:
+        EVALUATING: /root/host_share/OpenStereo/data/FallingThings/fat_test.txt
+      MAX_PER_SCENE: 10
